@@ -1,25 +1,39 @@
 const logger = require('./src/utils/logger');
 const tiktokScraper = require('./src/core/tiktokScraper');
+const transcriber = require('./src/core/transcriber');
 require('dotenv').config();
 
 async function main() {
     logger.divider();
     logger.success('Hệ thống YouTube Re-Up Agent khởi động!');
-    logger.info('Module: Content Intelligence - TikTok Downloader');
+    logger.info('Module: Content Intelligence - Full Pipeline');
     logger.divider();
 
-    // Demo với một video thực tế (Bạn có thể đổi link ở đây)
+    // Link demo (Có thể thay bằng link thật để test)
     const testUrl = 'https://www.tiktok.com/@tiktok/video/7123456789012345678'; 
     
     try {
-        logger.info('Tiến hành chạy thử nghiệm tải video (giả lập)...');
-        // const filePath = await tiktokScraper.downloadVideo(testUrl);
-        // logger.success(`Đã tải thành công: ${filePath}`);
+        // BƯỚC 1: Tải video không watermark
+        logger.info('--- BƯỚC 1: TẢI VIDEO ---');
+        // const videoPath = await tiktokScraper.downloadVideo(testUrl);
+        const videoPath = './downloads/demo.mp4'; // Giả lập video có sẵn để test Bước 2
         
-        logger.warn('Lưu ý: Bạn cần cấu hình API Key hoặc Scraper chuyên dụng để tải video không watermark.');
-        logger.info('Playwright đã sẵn sàng để thực hiện scraping giao diện nếu cần.');
+        // BƯỚC 2: Xử lý âm thanh và Transcribe
+        logger.info('--- BƯỚC 2: XỬ LÝ & TRANSCRIBE ---');
+        if (require('fs').existsSync(videoPath)) {
+            const audioPath = await transcriber.extractAudio(videoPath);
+            const text = await transcriber.transcribeAudio(audioPath);
+            
+            logger.divider();
+            logger.info('NỘI DUNG TRANSCRIBE:');
+            console.log(text.italic.gray);
+            logger.divider();
+        } else {
+            logger.warn(`Không tìm thấy file video tại: ${videoPath}. Bỏ qua bước 2.`);
+        }
+
     } catch (err) {
-        logger.error('Chương trình gặp lỗi.');
+        logger.error('Chương trình tạm dừng do lỗi hoặc thiếu cấu hình.');
     }
     
     logger.divider();
