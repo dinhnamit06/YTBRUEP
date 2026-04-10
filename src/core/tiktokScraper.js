@@ -19,25 +19,26 @@ class TikTokScraper {
     async downloadVideo(url) {
         let browser;
         try {
-            logger.info(`Đang khởi tạo trình duyệt để xử lý: ${url}`);
-            browser = await chromium.launch({ headless: true });
+            logger.info(`Đang xử lý: ${url}`);
+            browser = await chromium.launch({ headless: false });
             const page = await browser.newPage();
 
-            // Sử dụng một service phổ biến: Snaptik
-            logger.info('Đang truy cập Snaptik...');
-            await page.goto('https://snaptik.app/vn');
+            // Sử dụng một service phổ biến: TikMate
+            logger.info('Đang truy cập TikMate...');
+            await page.goto('https://tikmate.app/', { waitUntil: 'networkidle', timeout: 60000 });
             
             // Nhập URL TikTok
+            logger.info('Đang nhập link vào TikMate...');
             await page.fill('#url', url);
-            await page.click('button.button-go');
+            await page.click('#send'); // ID cho nút Download của TikMate
 
-            logger.info('Đang chờ link tải không watermark...');
+            logger.info('Đang chờ link tải không watermark (có thể mất 10-20s)...');
             
             // Chờ link tải xuất hiện
-            await page.waitForSelector('a.download-any', { timeout: 30000 });
+            await page.waitForSelector('.abutton.download', { timeout: 60000 });
             
-            // Lấy link tải đầu tiên (thường là Server 1 - No Watermark)
-            const downloadUrl = await page.getAttribute('a.download-any', 'href');
+            // Lấy link tải đầu tiên
+            const downloadUrl = await page.getAttribute('.abutton.download', 'href');
             
             if (!downloadUrl) throw new Error('Không tìm thấy link tải.');
 
