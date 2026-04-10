@@ -3,53 +3,61 @@ const tiktokScraper = require('./src/core/tiktokScraper');
 const youtubeDownloader = require('./src/core/youtubeDownloader');
 const transcriber = require('./src/core/transcriber');
 const contentAnalyzer = require('./src/core/contentAnalyzer');
+const voiceGenerator = require('./src/core/voiceGenerator');
+const subtitleGenerator = require('./src/core/subtitleGenerator');
+const videoEditor = require('./src/core/videoEditor');
 require('dotenv').config();
 
 async function main() {
     logger.divider();
-    logger.success('Hệ thống YouTube Re-Up Agent khởi động!');
-    logger.info('Module: YouTube Content Pipeline (V4.0)');
+    logger.success('Hệ thống YouTube Re-Up Agent - TRẠM SẢN XUẤT PHIM (V6.0)');
     logger.divider();
 
     // LINK YOUTUBE ĐỂ CHẠY THỬ
+    // Dùng link ngắn để render nhanh cho bản demo
     const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw'; 
     
     try {
         // BƯỚC 1: Tải nội dung
         logger.info('--- BƯỚC 1: TẢI NỘI DUNG ---');
-        let videoPath = '';
-        if (testUrl.includes('youtube.com') || testUrl.includes('youtu.be')) {
-            videoPath = await youtubeDownloader.download(testUrl);
-        } else {
-            videoPath = await tiktokScraper.downloadVideo(testUrl);
-        }
+        let videoPath = await youtubeDownloader.download(testUrl);
         
         // BƯỚC 2: Xử lý âm thanh và Transcribe
         logger.info('--- BƯỚC 2: XỬ LÝ & TRANSCRIBE ---');
-        let rawText = '';
-        if (require('fs').existsSync(videoPath)) {
-            const audioPath = await transcriber.extractAudio(videoPath);
-            rawText = await transcriber.transcribeAudio(audioPath);
-            logger.info('Nội dung gốc: ' + rawText.substring(0, 50) + '...');
-        } else {
-            logger.warn(`Không tìm thấy video tại ${videoPath}. Dùng văn bản mẫu để test Bước 3.`);
-            rawText = "Xin chào các bạn, hôm nay mình sẽ hướng dẫn các bạn cách để có thể chơi game mượt hơn trên điện thoại Android. Đầu tiên các bạn vào phần cài đặt, sau đó chọn tùy chọn nhà phát triển và tắt các hiệu ứng chuyển cảnh đi nhé. Chúc các bạn thành công và đừng quên đăng ký kênh mình nha.";
-        }
-
-        // BƯỚC 3: Phân tích và Đề xuất chiến lược
-        logger.info('--- BƯỚC 3: PHÂN TÍCH & CHIẾN LƯỢC ---');
+        const audioPath = await transcriber.extractAudio(videoPath);
+        const rawText = await transcriber.transcribeAudio(audioPath);
+        
+        // BƯỚC 3: Phân tích và Viết kịch bản + Timestamps
+        logger.info('--- BƯỚC 3: PHÂN TÍCH & KỊCH BẢN ---');
         const analysis = await contentAnalyzer.analyze(rawText);
         
+        // Trích xuất Script và Timed Script từ phân tích của Gemini
+        const timedScriptMatch = analysis.split('TIMED_SCRIPT');
+        const cleanScriptMatch = analysis.split('CLEAN_SCRIPT');
+        
+        const timedScript = timedScriptMatch.length > 1 ? timedScriptMatch[1].split('CLEAN_SCRIPT')[0].trim() : '';
+        const cleanScript = cleanScriptMatch.length > 1 ? cleanScriptMatch[1].trim() : rawText;
+
+        // BƯỚC 4: Sản xuất Video Final (Lồng tiếng + Phụ đề)
+        logger.info('--- BƯỚC 4: SẢN XUẤT VIDEO FINAL ---');
+        
+        // 4.1: Tạo giọng đọc AI
+        const ttsAudioPath = await voiceGenerator.generateVoice(cleanScript);
+
+        // 4.2: Tạo file phụ đề SRT
+        const srtPath = await subtitleGenerator.createSrt(timedScript);
+
+        // 4.3: Render video với lồng tiếng và phụ đề mới
+        const finalVideoPath = await videoEditor.mergeAudio(videoPath, ttsAudioPath, srtPath);
+
         logger.divider();
-        logger.success('KẾ HOẠCH NỘI DUNG YOUTUBE:');
-        console.log(analysis.cyan);
+        logger.success('DỰ ÁN ĐÃ HOÀN THÀNH XUẤT SẮC!');
+        logger.info(`Video Final (Có Sub + Voice): ${finalVideoPath}`);
         logger.divider();
 
     } catch (err) {
-        logger.error('Chương trình tạm dừng do lỗi hệ thống.');
+        logger.error(`Lỗi hệ thống: ${err.message}`);
     }
-    
-    logger.divider();
 }
 
 main();

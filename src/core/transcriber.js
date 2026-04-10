@@ -8,7 +8,7 @@ require('dotenv').config();
 class Transcriber {
     constructor() {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        this.model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1" });
+        this.model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }, { apiVersion: "v1beta" });
         this.tempPath = './temp';
         fs.ensureDirSync(this.tempPath);
     }
