@@ -1,5 +1,5 @@
 const ffmpeg = require('fluent-ffmpeg');
-const { OpenAI } = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs-extra');
 const path = require('path');
 const logger = require('../utils/logger');
@@ -7,9 +7,8 @@ require('dotenv').config();
 
 class Transcriber {
     constructor() {
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY
-        });
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        this.model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         this.tempPath = './temp';
         fs.ensureDirSync(this.tempPath);
     }
@@ -17,13 +16,12 @@ class Transcriber {
     /**
      * Trích xuất âm thanh từ video
      * @param {string} videoPath 
-     * @returns {Promise<string>} - Đường dẫn đến tệp audio .mp3
      */
     async extractAudio(videoPath) {
         return new Promise((resolve, reject) => {
             const audioPath = path.join(this.tempPath, `${path.basename(videoPath, path.extname(videoPath))}.mp3`);
             
-            logger.info(`Đang trích xuất âm thanh từ: ${path.basename(videoPath)}`);
+            logger.info(`Đang trích xuất âm thanh: ${path.basename(videoPath)}`);
             
             ffmpeg(videoPath)
                 .toFormat('mp3')
@@ -40,29 +38,37 @@ class Transcriber {
     }
 
     /**
-     * Transcribe âm thanh sang văn bản dùng OpenAI Whisper
+     * Transcribe âm thanh sang văn bản dùng Gemini 1.5
      * @param {string} audioPath 
-     * @returns {Promise<string>} - Nội dung văn bản
      */
     async transcribeAudio(audioPath) {
         try {
-            logger.info('Đang gửi âm thanh đến OpenAI Whisper...');
+            logger.info('Đang sử dụng Gemini 1.5 Flash để Transcribe...');
             
-            const transcription = await this.openai.audio.transcriptions.create({
-                file: fs.createReadStream(audioPath),
-                model: "whisper-1",
-            });
+            const audioBuffer = await fs.readFile(audioPath);
+            const base64Audio = audioBuffer.toString('base64');
 
-            logger.success('Transcribe thành công!');
-            return transcription.text;
+            const prompt = "Hãy transcribe nội dung âm thanh của video này một cách chính xác nhất. Chỉ trả về phần văn bản đã nói.";
+            
+            const result = await this.model.generateContent([
+                prompt,
+                {
+                    inlineData: {
+                        data: base64Audio,
+                        mimeType: "audio/mp3"
+                    }
+                }
+            ]);
+
+            const response = await result.response;
+            const text = response.text();
+
+            logger.success('Gemini Transcribe thành công!');
+            return text;
         } catch (error) {
-            logger.error(`Lỗi Transcribe: ${error.message}`);
-            if (error.message.includes('apiKey')) {
-                logger.warn('Vui lòng kiểm tra lại OPENAI_API_KEY trong tệp .env');
-            }
+            logger.error(`Lỗi Gemini Transcribe: ${error.message}`);
             throw error;
         } finally {
-            // Xóa file âm thanh tạm sau khi xong
             if (await fs.exists(audioPath)) {
                 await fs.remove(audioPath);
             }
