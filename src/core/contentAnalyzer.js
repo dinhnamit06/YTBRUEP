@@ -30,7 +30,7 @@ class ContentAnalyzer {
                 QUAN TRỌNG: Hãy cung cấp:
                 1. "TIMED_SCRIPT": Kịch bản kèm mốc thời gian để làm sub.
                 2. "CLEAN_SCRIPT": Kịch bản trơn để đọc voice.
-                3. "SHORT_TITLE": Một tiêu đề cực ngắn (dưới 5 từ), cực sốc để tôi chèn vào Thumbnail.
+                3. "SHORT_TITLE": Chỉ 2-3 từ cực mạnh, cực sốc (Ví dụ: "BÍ MẬT!", "CẢNH BÁO!", "QUÁ ĐỈNH!") để chèn vào Thumbnail.
 
                 Trả về kết quả bằng tiếng Việt.
             `;
