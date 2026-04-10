@@ -1,5 +1,6 @@
 const logger = require('./src/utils/logger');
 const tiktokScraper = require('./src/core/tiktokScraper');
+const youtubeDownloader = require('./src/core/youtubeDownloader');
 const transcriber = require('./src/core/transcriber');
 const contentAnalyzer = require('./src/core/contentAnalyzer');
 require('dotenv').config();
@@ -7,17 +8,21 @@ require('dotenv').config();
 async function main() {
     logger.divider();
     logger.success('Hệ thống YouTube Re-Up Agent khởi động!');
-    logger.info('Module: Content Intelligence - Full Pipeline (V3.0)');
+    logger.info('Module: YouTube Content Pipeline (V4.0)');
     logger.divider();
 
-    // Link demo
-    const testUrl = 'https://www.tiktok.com/@vngaming_yt/video/7355203362671512849'; 
+    // LINK YOUTUBE ĐỂ CHẠY THỬ
+    const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw'; 
     
     try {
-        // BƯỚC 1: Tải video không watermark
-        logger.info('--- BƯỚC 1: TẢI VIDEO ---');
-        // const videoPath = await tiktokScraper.downloadVideo(testUrl);
-        const videoPath = './downloads/demo.mp4'; 
+        // BƯỚC 1: Tải nội dung
+        logger.info('--- BƯỚC 1: TẢI NỘI DUNG ---');
+        let videoPath = '';
+        if (testUrl.includes('youtube.com') || testUrl.includes('youtu.be')) {
+            videoPath = await youtubeDownloader.download(testUrl);
+        } else {
+            videoPath = await tiktokScraper.downloadVideo(testUrl);
+        }
         
         // BƯỚC 2: Xử lý âm thanh và Transcribe
         logger.info('--- BƯỚC 2: XỬ LÝ & TRANSCRIBE ---');
