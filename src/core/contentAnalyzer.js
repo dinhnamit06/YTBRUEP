@@ -27,11 +27,10 @@ class ContentAnalyzer {
                 2. Đề xuất tiêu đề SEO.
                 3. Viết lại kịch bản hấp dẫn hơn.
                 
-                QUAN TRỌNG: Hãy cung cấp một phần có tiêu đề "TIMED_SCRIPT" chứa kịch bản mới được chia thành các đoạn ngắn (mỗi đoạn 3-5 từ), kèm mốc thời gian giả định theo cấu trúc:
-                [START_TIME --> END_TIME]: Nội dung câu
-                (Ví dụ: [00:00:00,000 --> 00:00:02,500]: Xin chào các bạn!)
-
-                Và phần "CLEAN_SCRIPT" chỉ chứa nội dung kịch bản để đọc voice.
+                QUAN TRỌNG: Hãy cung cấp:
+                1. "TIMED_SCRIPT": Kịch bản kèm mốc thời gian để làm sub.
+                2. "CLEAN_SCRIPT": Kịch bản trơn để đọc voice.
+                3. "SHORT_TITLE": Một tiêu đề cực ngắn (dưới 5 từ), cực sốc để tôi chèn vào Thumbnail.
 
                 Trả về kết quả bằng tiếng Việt.
             `;
